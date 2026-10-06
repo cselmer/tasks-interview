@@ -1,17 +1,16 @@
 <h1 class="text-2xl font-bold mb-4">Tasks</h1>
 
-<div class="flex flex-col gap-y-8">
-  <%- @tasks.each do |task| %>
-    <div class="flex gap-x-8">
-      <h2 class="text-lg font-semibold shrink-0"><%= task.title %></h2>
-      <div><%= task.complete? ? "Complete" : "Incomplete" %></div>
-      <div class="italic"><%= task.description&.truncate(50) %></div>
-      <div class="flex gap-x-2">
-        <%= link_to "Edit", edit_task_path(task) %>
-        <%= link_to "Delete", task_path(task), data: { turbo_method: "delete" } %>
-      </div>
-    </div>
+<section id="due-soon" class="flex flex-col gap-y-4 mb-8">
+  <h2 class="text-xl font-bold">Due Soon</h2>
+  <%- if @due_soon_tasks.present? %>
+    <%= render partial: "task", collection: @due_soon_tasks %>
+  <%- else %>
+    <p class="italic">Nothing due soon.</p>
   <%- end %>
+</section>
+
+<div class="flex flex-col gap-y-8">
+  <%= render partial: "task", collection: @tasks %>
 </div>
 
 <hr class="my-8" />

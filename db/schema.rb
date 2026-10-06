@@ -10,24 +10,28 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2023_04_19_141258) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_06_120000) do
   # These are extensions that must be enabled in order to support this database
-  enable_extension "plpgsql"
+  enable_extension "pg_catalog.plpgsql"
 
   create_table "tasks", force: :cascade do |t|
-    t.string "title"
-    t.text "description"
+    t.bigint "assignee_id"
     t.boolean "complete"
     t.datetime "created_at", null: false
+    t.text "description"
+    t.date "due_date"
+    t.string "title"
     t.datetime "updated_at", null: false
+    t.index ["assignee_id"], name: "index_tasks_on_assignee_id"
   end
 
   create_table "users", force: :cascade do |t|
-    t.string "name"
-    t.string "email"
-    t.string "password_digest"
     t.datetime "created_at", null: false
+    t.string "email"
+    t.string "name"
+    t.string "password_digest"
     t.datetime "updated_at", null: false
   end
 
+  add_foreign_key "tasks", "users", column: "assignee_id"
 end
