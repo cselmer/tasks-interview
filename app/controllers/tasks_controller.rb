@@ -2,7 +2,7 @@ class TasksController < ApplicationController
   before_action :authenticate_user
 
   def index
-    @tasks = Task.all
+    @tasks = Task.order(:created_at)
     @due_soon_tasks = Task.due_soon_for(user: current_user)
   end
 

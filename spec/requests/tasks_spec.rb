@@ -10,6 +10,29 @@ RSpec.describe "Tasks", type: :request do
       expect(response).to redirect_to(new_session_path)
     end
 
+    it "renders a checked box for complete tasks and an unchecked box for incomplete tasks" do
+      complete_task = create(:task, complete: true)
+      incomplete_task = create(:task, complete: false)
+      sign_in(user: user)
+
+      get tasks_path
+
+      expect(response).to have_http_status(:ok)
+      assert_select "input[type=checkbox][name='task[complete]'][id=?][checked]", "complete_task_#{complete_task.id}"
+      assert_select "input[type=checkbox][name='task[complete]'][id=?]:not([checked])", "complete_task_#{incomplete_task.id}"
+    end
+
+    it "keeps tasks in creation order after one is toggled" do
+      first_task = create(:task, title: "First task")
+      second_task = create(:task, title: "Second task")
+      first_task.update!(complete: true)
+      sign_in(user: user)
+
+      get tasks_path
+
+      expect(response.body.index(first_task.title)).to be < response.body.index(second_task.title)
+    end
+
     it "lists only the current user's incomplete tasks due in the next seven days under Due Soon" do
       sign_in(user: user)
       due_later = create(:task, title: "Due in five days", assignee: user, due_date: Date.current + 5)
@@ -25,9 +48,9 @@ RSpec.describe "Tasks", type: :request do
       get tasks_path
 
       expect(response).to have_http_status(:ok)
-      due_soon_headings = css_select("#due-soon h2").map(&:text)
+      due_soon_headings = css_select("#due-soon h2").map { |heading| heading.text.strip }
       expect(due_soon_headings).to eq(["Due Soon", due_today.title, due_later.title])
-      expect(css_select("h2").map(&:text)).to include(*excluded.map(&:title))
+      expect(css_select("h2").map { |heading| heading.text.strip }).to include(*excluded.map(&:title))
     end
 
     it "shows an empty state when nothing is due soon" do
@@ -55,6 +78,26 @@ RSpec.describe "Tasks", type: :request do
   end
 
   describe "PATCH /tasks/:id" do
+    it "marks an incomplete task complete" do
+      task = create(:task, complete: false)
+      sign_in(user: user)
+
+      patch task_path(task), params: {task: {complete: "1"}}
+
+      expect(response).to redirect_to(tasks_path)
+      expect(task.reload.complete).to be(true)
+    end
+
+    it "marks a complete task incomplete" do
+      task = create(:task, complete: true)
+      sign_in(user: user)
+
+      patch task_path(task), params: {task: {complete: "0"}}
+
+      expect(response).to redirect_to(tasks_path)
+      expect(task.reload.complete).to be(false)
+    end
+
     it "updates a task's due date and assignee" do
       sign_in(user: user)
       task = create(:task)
@@ -65,6 +108,15 @@ RSpec.describe "Tasks", type: :request do
       expect(task.due_date).to eq(Date.current + 3)
       expect(task.assignee).to eq(user)
       expect(response).to redirect_to(tasks_path)
+    end
+
+    it "redirects to login and leaves the task unchanged when signed out" do
+      task = create(:task, complete: false)
+
+      patch task_path(task), params: {task: {complete: "1"}}
+
+      expect(response).to redirect_to(new_session_path)
+      expect(task.reload.complete).to be(false)
     end
   end
 end

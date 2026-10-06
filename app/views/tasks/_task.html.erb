@@ -1,6 +1,14 @@
-<div class="flex gap-x-8">
-  <h2 class="text-lg font-semibold shrink-0"><%= task.title %></h2>
-  <div><%= task.complete? ? "Complete" : "Incomplete" %></div>
+<div class="flex gap-x-8 items-center">
+  <%= form_with model: task, data: { controller: "auto-submit" } do |form| %>
+    <%= form.check_box :complete,
+      id: dom_id(task, :complete),
+      class: "h-5 w-5 cursor-pointer",
+      data: { action: "change->auto-submit#submit" } %>
+  <% end %>
+  <h2 class="text-lg font-semibold shrink-0">
+    <%= label_tag dom_id(task, :complete), task.title,
+      class: class_names("cursor-pointer", "line-through text-gray-500": task.complete?) %>
+  </h2>
   <div><%= due_date_label(task: task) %></div>
   <div class="italic"><%= task.description&.truncate(50) %></div>
   <div class="flex gap-x-2">
