@@ -27,20 +27,28 @@ To install Rubygem dependencies, use Bundler:
 bundle install
 ```
 
-### Bootstrapping the Database
+### Bootstrapping
 
-Refer to the `config/database.yml` file for details on the local database name
+`bin/setup` is the first command to run in any fresh checkout:
+
+```
+bin/setup
+```
+
+It installs the Rubygem dependencies, creates and seeds the database, and
+builds the Tailwind CSS bundle. The seeds include several users you can use to
+log in. Refer to `config/database.yml` for details on the local database name
 and connection information.
 
-To get your local database setup, use the built-in Rails database management
-commands:
+### Running the Tests
 
 ```
-bin/rails db:create db:migrate db:seed
+bundle exec rspec
 ```
 
-This will seed the database with some initial data, including several users
-you can use to log in.
+After `bin/setup`, the suite rebuilds the Tailwind CSS bundle if it goes
+missing, for example after `git clean -fdx`. `bin/rails spec` builds it
+unconditionally via `spec:prepare`.
 
 ### Local Development
 
@@ -79,3 +87,20 @@ applying one lens to the change:
 - **`review-testing`** — RSpec/FactoryBot coverage and test quality.
 
 See [`CLAUDE.md`](CLAUDE.md) for the code conventions these tools enforce.
+
+## Troubleshooting
+
+**`tailwindcss:build` exits 137 (SIGKILL) on Apple Silicon.** On the Macs we
+tested, macOS kills the `tailwindcss-ruby` 4.3.0 arm64 binary at launch because
+its code signature no longer matches its contents; later releases run. Update
+the gem:
+
+```
+bundle update tailwindcss-ruby --conservative
+```
+
+or re-sign the binary in place:
+
+```
+codesign --force --sign - "$(bundle exec ruby -e 'require "tailwindcss/ruby"; puts Tailwindcss::Ruby.executable')"
+```
