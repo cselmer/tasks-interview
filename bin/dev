@@ -5,4 +5,15 @@ if ! command -v foreman > /dev/null 2>&1; then
   gem install foreman
 fi
 
+# A checkout named tasks-interview keeps 3000; every other checkout, such as a
+# git worktree, gets a stable port of its own so parallel servers rarely collide.
+if [ -z "$PORT" ]; then
+  app_root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd -P)
+  case "$(basename "$app_root")" in
+    tasks-interview) PORT=3000 ;;
+    *) PORT=$((3001 + $(printf '%s' "$app_root" | cksum | cut -d ' ' -f 1) % 999)) ;;
+  esac
+fi
+export PORT
+
 exec foreman start -f Procfile.dev "$@"

@@ -45,18 +45,56 @@ you can use to log in.
 ### Local Development
 
 Since we use the `tailwindcss-rails` gem to pull in the [Tailwind CSS library](https://tailwindcss.com),
-the local development environment requires two separate process: the normal
+the local development environment requires two separate processes: the normal
 Rails server process and a local Tailwind process. To start them, run:
 
 ```
 bin/dev
 ```
 
+The server listens on port 3000 in a checkout named `tasks-interview`. Every
+other checkout, such as a git worktree, gets a stable port of its own between
+3001 and 3999, derived from its path, so parallel worktrees rarely collide. Puma
+logs the port at startup. If it reports the address is already in use, or you
+want a particular port, set `PORT`:
+
+```
+PORT=3001 bin/dev
+```
+
+### Parallel Checkouts
+
+By default every checkout, including every git worktree, gets its own
+development and test databases, named
+`tasks_interview_<directory>_<hash>_development` and `_test`, where `<hash>`
+comes from the checkout's full path (see `config/database.yml`). A git worktree
+in `my-feature/` uses something like
+`tasks_interview_my_feature_3f9a1c_development`, and a clone in
+`tasks-interview/` uses `tasks_interview_3f9a1c_development`, so parallel
+checkouts do not share schema or data unless you point them at the same pair.
+`bin/setup` creates both databases and seeds the development database.
+
+To use a different pair, for example after moving a checkout, export
+`DB_NAME_BASE` in that checkout's shell; it replaces everything before
+`_development` and `_test` and applies to every command, from `bin/dev` to
+`rspec`:
+
+```
+export DB_NAME_BASE=tasks_interview_my_feature_3f9a1c
+```
+
+A checkout set up before this scheme has its data under the old names,
+`tasks_interview_development` and `tasks_interview_test`. Run `bin/setup` once
+to create its new pair, or set `DB_NAME_BASE=tasks_interview` to keep using the
+old one.
+
 ## Claude Code
 
 This repo includes custom [Claude Code](https://claude.com/claude-code) tooling
 under `.claude/`. If you use Claude Code in this project, the following slash
-commands are available to everyone who clones the repo.
+commands are available to everyone who clones the repo. `.claude/launch.json`
+lets the Claude Code desktop app start `bin/dev` on a free port for in-app
+previews.
 
 ### Skills
 
