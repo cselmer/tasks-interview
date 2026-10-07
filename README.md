@@ -27,20 +27,28 @@ To install Rubygem dependencies, use Bundler:
 bundle install
 ```
 
-### Bootstrapping the Database
+### Bootstrapping
 
-Refer to the `config/database.yml` file for details on the local database name
+`bin/setup` is the first command to run in any fresh checkout:
+
+```
+bin/setup
+```
+
+It installs the Rubygem dependencies, creates and seeds the database, and
+builds the Tailwind CSS bundle. The seeds include several users you can use to
+log in. Refer to `config/database.yml` for details on the local database name
 and connection information.
 
-To get your local database setup, use the built-in Rails database management
-commands:
+### Running the Tests
 
 ```
-bin/rails db:create db:migrate db:seed
+bundle exec rspec
 ```
 
-This will seed the database with some initial data, including several users
-you can use to log in.
+After `bin/setup`, the suite rebuilds the Tailwind CSS bundle if it goes
+missing, for example after `git clean -fdx`. `bin/rails spec` builds it
+unconditionally via `spec:prepare`.
 
 ### Local Development
 
