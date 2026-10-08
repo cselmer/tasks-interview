@@ -3,6 +3,7 @@
   <div><%= task.complete? ? "Complete" : "Incomplete" %></div>
   <div class="italic"><%= task.description&.truncate(50) %></div>
   <div><%= assignee_name(task:) %></div>
+  <div><%= due_date_label(task:) %></div>
   <div class="flex gap-x-2">
     <%= button_to task.complete? ? "Mark incomplete" : "Mark complete",
           task_path(task),
