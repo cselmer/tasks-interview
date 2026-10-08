@@ -71,6 +71,7 @@ RSpec.describe "Tasks", type: :request do
 
       get tasks_path
 
+      expect(response).to have_http_status(:ok)
       assert_select "form[action=?]", task_path(task) do
         assert_select "button", text: "Mark complete"
         assert_select "input[name=?][value=?]", "task[complete]", "true"
@@ -85,6 +86,7 @@ RSpec.describe "Tasks", type: :request do
 
       get tasks_path
 
+      expect(response).to have_http_status(:ok)
       assert_select "form[action=?]", task_path(task) do
         assert_select "button", text: "Mark incomplete"
         assert_select "input[name=?][value=?]", "task[complete]", "false"
@@ -106,6 +108,7 @@ RSpec.describe "Tasks", type: :request do
 
       expect(response).to redirect_to(tasks_path)
       follow_redirect!
+      expect(response).to have_http_status(:ok)
       expect(response.body).to include(attributes[:title])
     end
 
@@ -182,6 +185,7 @@ RSpec.describe "Tasks", type: :request do
 
       expect(response).to redirect_to(tasks_path)
       follow_redirect!
+      expect(response).to have_http_status(:ok)
       expect(response.body).to include("Could not delete task.")
     end
   end
