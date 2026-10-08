@@ -5,9 +5,7 @@ RSpec.describe Task, type: :model do
     expect(build(:task)).to be_valid
   end
 
-  describe "assignee" do
-    it "must be an existing user" do
-      expect { create(:task, assignee_id: 0) }.to raise_error(ActiveRecord::InvalidForeignKey)
-    end
+  it "has a database foreign key on assignee_id" do
+    expect { create(:task, assignee_id: 0) }.to raise_error(ActiveRecord::InvalidForeignKey)
   end
 end
