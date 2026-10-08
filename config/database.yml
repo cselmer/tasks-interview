@@ -21,9 +21,22 @@ default: &default
   # https://guides.rubyonrails.org/configuring.html#database-pooling
   pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
 
+# Each checkout, including every git worktree, gets its own databases so
+# parallel branches never share schema or data. The name carries the checkout
+# directory's basename, capped at 28 characters so the longest name fits
+# PostgreSQL's 63-character limit, and a hash of its full path so two checkouts
+# with the same directory name stay apart. A clone named tasks-interview drops
+# the redundant basename. DB_NAME_BASE replaces everything before _development
+# and _test, and is cleaned the same way so the two can never collapse into one
+# database.
+<% basename = Rails.root.basename.to_s.gsub(/\W/, "_")[0, 28] %>
+<% path_hash = Digest::SHA256.hexdigest(Rails.root.to_s)[0, 6] %>
+<% checkout = basename == "tasks_interview" ? path_hash : "#{basename}_#{path_hash}" %>
+<% db_name_base = (ENV["DB_NAME_BASE"].presence || "tasks_interview_#{checkout}").gsub(/\W/, "_")[0, 51] %>
+
 development:
   <<: *default
-  database: tasks_interview_development
+  database: <%= db_name_base %>_development
 
   # The specified database role being used to connect to postgres.
   # To create additional roles in postgres see `$ createuser --help`.
@@ -57,7 +70,7 @@ development:
 # Do not set this db to the same as development or production.
 test:
   <<: *default
-  database: tasks_interview_test
+  database: <%= db_name_base %>_test
 
 # As with config/credentials.yml, you never want to store sensitive information,
 # like your database password, in your source code. If your source code is
