@@ -109,6 +109,17 @@ previews.
 - **`/plan [task description]`** — Plans the implementation approach before any
   code is written. It enters Plan mode (read-only), explores the codebase, and
   presents an approach for your approval. Use it before starting non-trivial work.
+- **`/work <requirements> [--base <branch>]`** — Builds a change from written
+  requirements (a ticket, an email excerpt, a sentence): orients in the repo,
+  plans, implements with specs on a feature branch off your base, gates with
+  `standardrb` and `bin/ci`, mutation-checks each claim, and commits with a
+  claims block that `/qa` reads.
+- **`/qa [PR number, GitHub URL, or branch — omit for current branch] [--base <branch>]`** —
+  Checks that a finished branch does what its claims block says, without
+  collateral damage: claims against the diff in both directions, the gate, a
+  mutation pass against what the user depends on, and concrete side-effect
+  checks (schema drift, gem churn, files outside the area, edited specs). Ends
+  with a PASS/FAIL verdict. Use after `/work` and before `/review`.
 - **`/review [PR number, GitHub URL, or branch — omit for current branch]`** —
   Runs a multi-agent code review. It routes the diff to focused review agents,
   synthesizes their findings by severity (🔴 / 🟠 / 🟡), and can post the result
@@ -123,5 +134,21 @@ applying one lens to the change:
 - **`review-security`** — authentication, authorization, mass assignment, and injection.
 - **`review-simplicity`** — over-engineering, duplication, and dead code (YAGNI).
 - **`review-testing`** — RSpec/FactoryBot coverage and test quality.
+
+### Hooks
+
+`.claude/settings.json` wires one PostToolUse hook, `.claude/hooks/status-first.sh`.
+After Claude edits a request spec, it flags any example that reads the response
+before asserting its status and feeds the line back so Claude fixes it. It also
+runs by hand on spec paths (`.claude/hooks/status-first.sh spec/requests/tasks_spec.rb`),
+and its own spec lives in `spec/hooks/`.
+
+### Evals
+
+[`docs/evals/qa-eval-design.md`](docs/evals/qa-eval-design.md) is the design for
+measuring whether `/qa` works: fixtures, what good output looks like, and how to
+catch a regression after a prompt change. `evals/run.rb` is a small
+[ruby_llm](https://rubyllm.com) runner that grades the `review-rails` agent
+prompt on two fixture diffs; `ruby evals/run.rb --dry-run` needs no API key.
 
 See [`CLAUDE.md`](CLAUDE.md) for the code conventions these tools enforce.
