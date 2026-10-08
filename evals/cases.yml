@@ -1,0 +1,28 @@
+# Dataset for evals/run.rb. `inputs` builds the agent's user message;
+# `metadata` drives both graders (regex assertions and the LLM judge).
+cases:
+  - name: empty_failure_branch
+    inputs:
+      title: Add create, update, and destroy to TasksController
+      diff: fixtures/empty_failure_branch.diff
+      files_changed:
+        - app/controllers/tasks_controller.rb
+    metadata:
+      planted_issue: >-
+        create, update, and destroy leave their else branches empty, so a failed
+        save, update, or destroy gives the user no feedback
+      must_match:
+        - 'tasks_controller\.rb:\d+'
+        - '(?i:else|failure|fail(?:s|ed)?\b)'
+        - '🔴|🟠'
+
+  - name: handled_failure_branch
+    inputs:
+      title: Add create, update, and destroy to TasksController
+      diff: fixtures/handled_failure_branch.diff
+      files_changed:
+        - app/controllers/tasks_controller.rb
+    metadata:
+      planted_issue: null
+      must_not_match:
+        - '🔴'
