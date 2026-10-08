@@ -130,7 +130,9 @@ base, note it (🟡) and use the resolved one.
 
 If no committed spec covers a user-facing claim, you may write a throwaway probe
 spec under `spec/requests/` to confirm it; delete it in step 8 and report the
-missing proof as 🟠.
+missing proof as 🟠. A reversibility claim (`bin/rails db:rollback`, then
+`bin/rails db:migrate`) runs against the development database of this checkout;
+afterwards `git diff db/schema.rb` must be empty.
 
 ## 6. Mutation pass
 

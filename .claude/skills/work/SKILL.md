@@ -112,7 +112,10 @@ the code and see it pass. Follow `CLAUDE.md` and the Traps below. Name each
 example for what it pins, and don't test Rails itself.
 
 - Schema change: `bin/rails generate migration <Name> ...`, then
-  `bin/rails db:migrate`, then `git diff db/schema.rb` (trap 9).
+  `bin/rails db:migrate`, then `git diff db/schema.rb` (trap 9). A constraint
+  (`change_column_null`, a foreign key, a unique index) fails on rows that
+  already violate it: decide between a backfill in the migration and failing
+  loudly, and record the choice under "Assumptions".
 - New utility classes, no `bin/dev` running: `bin/rails tailwindcss:build`.
 
 ## Step 6: Mutate what the user needs
@@ -129,6 +132,11 @@ from the index, so unstaged work in that file would be lost. Then, per claim:
 make the minimal edit, run the spec the claim names, confirm it fails, and
 restore with `git checkout -- <file>`. After every restore `git diff` is empty
 and `git status --short` lists only your work.
+
+A `null: false`, default, or foreign key lives in the database, so mutate its
+line in `db/schema.rb`: the test database reloads a changed schema on the next
+`bundle exec rspec`. Restore the file and run that spec once more so the test
+database is back on the real schema.
 
 A claim whose mutation leaves the suite green is not verified: strengthen the
 spec (usually by asserting what the view emits, trap 2) and mutate again, or
