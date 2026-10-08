@@ -16,6 +16,12 @@ RSpec.describe Task, type: :model do
     expect(build(:task, title: "  ")).not_to be_valid
   end
 
+  it "has a database NOT NULL constraint on title" do
+    task = build(:task, title: nil)
+
+    expect { task.save(validate: false) }.to raise_error(ActiveRecord::NotNullViolation)
+  end
+
   it "has a database foreign key on assignee_id" do
     expect { create(:task, assignee_id: 0) }.to raise_error(ActiveRecord::InvalidForeignKey)
   end
