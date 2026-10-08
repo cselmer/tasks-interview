@@ -39,7 +39,8 @@ areas. Never delegate the implementation itself.
 - **Base**: the branch the work diffs against and will merge into (Step 2).
 - **Gate**: `bin/ci` (what it runs: `CLAUDE.md`, **Setup**). Green means exit
   0. Nothing is done until the gate is green.
-- **Area**: the set of paths a requirement legitimately touches. Anything
+- **Area**: the set of paths a requirement legitimately touches, plus the
+  companions `CLAUDE.md` lists for them (**Companion changes**). Anything
   outside it is a side effect unless the requirement called for it.
 - **Claims block**: the summary this run ends with and `/qa` reads (Step 8).
 
@@ -97,7 +98,9 @@ only when the work spans more than about three files or an area not yet read.
 ## Step 4: Plan
 
 Write the plan down in a few lines before editing: the area (every path you
-expect to touch), each behavior you will claim and the spec that will prove
+expect to touch, plus the companions `CLAUDE.md` lists for those paths under
+**Companion changes**; a companion you decide to skip goes under "Not done"
+with the reason), each behavior you will claim and the spec that will prove
 it, and the readings chosen in Step 1. Reuse what exists — `load_tasks`, the
 `Task` scopes, the helpers, `spec/support` — before adding anything. If the
 requirement cannot work without a change outside the area (a `Gemfile` or
@@ -238,6 +241,8 @@ helpers), and **Git & PRs** (the base branch). Read it rather than this list.
 ## Definition of done
 
 - Branch off the base, diff inside the area, nothing on `main` or the base.
+- Every companion `CLAUDE.md` lists for the touched paths is changed, or named
+  under "Not done" with the reason.
 - The gate is green: `bin/ci` exits 0.
 - Every claim is verified by a named spec that failed under its mutation.
 - The claims block matches `git diff --stat <base>...HEAD` exactly.

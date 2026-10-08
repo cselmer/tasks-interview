@@ -27,7 +27,8 @@ restores them with `git checkout`, which would discard yours.
 - **Gate**: `bin/ci` — `bin/setup --skip-server`, the importmap audit,
   `bundle exec standardrb`, `bundle exec rspec`, then `db:seed:replant` and
   `db:truncate_all` in the test database. Green means exit 0.
-- **Area**: the set of paths a requirement legitimately touches. Anything outside
+- **Area**: the set of paths a requirement legitimately touches, plus the
+  companions `CLAUDE.md` lists for them (**Companion changes**). Anything outside
   it is a side effect unless the requirement called for it.
 - **Claims block**: the plain-text summary `/work` ends with — the body of its final
   commit, the PR description, and this skill's input. It opens with
@@ -167,7 +168,8 @@ in `spec/models/task_spec.rb` are the pattern that catches it.
 ## 7. Check for unwanted side effects
 
 Each check gives what counts as a failure, its severity, and its command. Skip a
-finding only when the requirement called for the change (cite the claims line).
+finding only when the requirement called for the change (cite the claims line)
+or `CLAUDE.md` lists the path as a companion of a path the branch changed.
 
 - **Schema drift** (🟠): a table, column, index, or `version:` that no migration on
   the branch introduces. Compare `git diff <base>...<branch> -- db/schema.rb` with
@@ -177,6 +179,10 @@ finding only when the requirement called for the change (cite the claims line).
 - **Files outside the area** (🟠): any path listed, including notes or handoff files.
   `git diff --name-only <base>...<branch> -- config/environments bin .claude .ruby-version .tool-versions .ruby-gemset tmp log app/assets/builds`
   `git diff --name-only --diff-filter=A <base>...<branch> | grep -vE '^(app|db|lib/tasks|spec)/'`
+- **Missing companion change** (🟠): a rule under `CLAUDE.md`, **Companion
+  changes**, whose trigger paths are in the diff while its companion path is
+  not, and "Not done" does not name the companion with a reason. Check each
+  rule against `git diff --name-only <base>...<branch>`.
 - **Seeds**: the gate's "Tests: Seeds" step red (🔴); a `title:` on a `-` line of
   `git diff <base>...<branch> -- db/seeds.rb` with no matching `+` line (🟠) —
   titles are the seed key, so a rename leaves the old row in every seeded database.

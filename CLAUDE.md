@@ -118,6 +118,22 @@ caller in the same change.
 - Run `bin/ci` before opening a PR; `bundle exec rspec` alone skips `standardrb`
   and the seeds.
 
+## Companion changes
+
+A change to one of these paths is not complete until its companion changes
+too, or the reason it does not is written down (in the PR description, or
+under "Not done" in the claims block when the change came from `/work`):
+
+- Anything under `.claude/` (skills, agents, hooks, `settings.json`) changes
+  the Claude Code section of `README.md`.
+- `bin/setup`, `bin/ci`, `config/ci.rb`, `config/database.yml`, `bin/dev`, or
+  `Procfile.dev` changes the Setup and Local Development sections of
+  `README.md` and the Setup section of this file.
+- A migration changes `db/schema.rb`; a new column the UI shows changes
+  `db/seeds.rb` and the form or index specs.
+- A mailer gets a preview under `spec/mailers/previews`.
+- A new route gets a request spec that exercises it.
+
 ## Git & PRs
 
 - Never commit directly on `main` or your personal base branch; they only
