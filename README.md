@@ -125,20 +125,3 @@ applying one lens to the change:
 - **`review-testing`** — RSpec/FactoryBot coverage and test quality.
 
 See [`CLAUDE.md`](CLAUDE.md) for the code conventions these tools enforce.
-
-## Troubleshooting
-
-**`tailwindcss:build` exits 137 (SIGKILL) on Apple Silicon.** On the Macs we
-tested, macOS kills the `tailwindcss-ruby` 4.3.0 arm64 binary at launch because
-its code signature no longer matches its contents; later releases run. Update
-the gem:
-
-```
-bundle update tailwindcss-ruby --conservative
-```
-
-or re-sign the binary in place:
-
-```
-codesign --force --sign - "$(bundle exec ruby -e 'require "tailwindcss/ruby"; puts Tailwindcss::Ruby.executable')"
-```
