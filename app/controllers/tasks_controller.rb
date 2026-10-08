@@ -2,7 +2,7 @@ class TasksController < ApplicationController
   before_action :authenticate_user
 
   def index
-    @tasks = Task.all
+    @tasks = Task.includes(:assignee)
   end
 
   def edit
@@ -42,6 +42,6 @@ class TasksController < ApplicationController
   private
 
   def task_params
-    params.require(:task).permit(:title, :description, :complete)
+    params.require(:task).permit(:title, :description, :complete, :assignee_id)
   end
 end
