@@ -1,0 +1,3 @@
+Hi <%= @task.assignee.name %>,
+
+This is a reminder that "<%= @task.title %>" is due tomorrow, <%= @task.due_date.to_fs(:long_ordinal) %>.

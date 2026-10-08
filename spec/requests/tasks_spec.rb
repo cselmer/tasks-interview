@@ -1,6 +1,16 @@
 require "rails_helper"
 
 RSpec.describe "Tasks", type: :request do
+  def users_queries_during(&block)
+    queries = []
+    subscriber = lambda do |*, payload|
+      queries << payload[:sql] if payload[:name] != "SCHEMA" && payload[:sql].include?('FROM "users"')
+    end
+
+    ActiveSupport::Notifications.subscribed(subscriber, "sql.active_record", &block)
+    queries.size
+  end
+
   describe "GET /tasks" do
     it "redirects to login when signed out" do
       get tasks_path
@@ -289,16 +299,6 @@ RSpec.describe "Tasks", type: :request do
       expect(queries_with_two_tasks).to be_positive
       expect(queries_with_six_tasks).to eq(queries_with_two_tasks)
     end
-
-    def users_queries_during(&block)
-      queries = []
-      subscriber = lambda do |*, payload|
-        queries << payload[:sql] if payload[:name] != "SCHEMA" && payload[:sql].include?('FROM "users"')
-      end
-
-      ActiveSupport::Notifications.subscribed(subscriber, "sql.active_record", &block)
-      queries.size
-    end
   end
 
   describe "assignee select" do
@@ -325,6 +325,146 @@ RSpec.describe "Tasks", type: :request do
       expect(response).to have_http_status(:ok)
       selected = response.parsed_body.css("select#task_assignee_id option[selected]")
       expect(selected.map(&:text)).to eq(["Ada Lovelace"])
+    end
+  end
+
+  describe "due dates" do
+    let(:user) { create(:user) }
+
+    before do
+      travel_to Time.zone.local(2026, 10, 8, 12)
+      sign_in(user:)
+    end
+
+    # A due-soon task's title appears in both sections, so assertions are
+    # scoped to one section's rows rather than the whole page.
+    def section(id:)
+      response.parsed_body.at_css("section##{id}")
+    end
+
+    def row_titles(section_id:)
+      section(id: section_id).css("> div h2").map(&:text)
+    end
+
+    it "renders a labelled due date field" do
+      get tasks_path
+
+      expect(response).to have_http_status(:ok)
+      assert_select "label[for=?]", "task_due_date", text: "Due date"
+      assert_select "input[type=date][name=?]", "task[due_date]"
+    end
+
+    it "saves the due date on create" do
+      post tasks_path, params: {task: {title: "Renew passport", due_date: "2026-10-20"}}
+
+      expect(response).to have_http_status(:found)
+      expect(Task.find_by!(title: "Renew passport").due_date).to eq(Date.new(2026, 10, 20))
+    end
+
+    it "keeps the submitted due date when create fails" do
+      post tasks_path, params: {task: {title: "", due_date: "2026-10-20"}}
+
+      expect(response).to have_http_status(:unprocessable_content)
+      assert_select "input[name=?][value=?]", "task[due_date]", "2026-10-20"
+    end
+
+    it "saves the due date on update" do
+      task = create(:task)
+
+      patch task_path(task), params: {task: {due_date: "2026-10-20"}}
+
+      expect(response).to have_http_status(:found)
+      expect(task.reload.due_date).to eq(Date.new(2026, 10, 20))
+    end
+
+    it "clears the due date on update when the field is emptied" do
+      task = create(:task, due_date: Date.new(2026, 10, 20))
+
+      patch task_path(task), params: {task: {due_date: ""}}
+
+      expect(response).to have_http_status(:found)
+      expect(task.reload.due_date).to be_nil
+    end
+
+    it "shows the due date on the task's row" do
+      create(:task, due_date: Date.new(2026, 10, 20))
+
+      get tasks_path
+
+      expect(response).to have_http_status(:ok)
+      expect(section(id: "all_tasks").text).to include("Due October 20th, 2026")
+      expect(section(id: "all_tasks").text).not_to include("No due date")
+    end
+
+    it "shows No due date on the row of a task without one" do
+      create(:task, due_date: nil)
+
+      get tasks_path
+
+      expect(response).to have_http_status(:ok)
+      expect(section(id: "all_tasks").text).to include("No due date")
+    end
+
+    it "does not query users once per due-soon task" do
+      2.times { create(:task, assignee: user, due_date: Date.new(2026, 10, 9)) }
+
+      queries_with_two_tasks = users_queries_during { get tasks_path }
+      expect(response).to have_http_status(:ok)
+
+      4.times { create(:task, assignee: user, due_date: Date.new(2026, 10, 9)) }
+
+      queries_with_six_tasks = users_queries_during { get tasks_path }
+      expect(response).to have_http_status(:ok)
+
+      expect(queries_with_two_tasks).to be_positive
+      expect(queries_with_six_tasks).to eq(queries_with_two_tasks)
+    end
+
+    describe "Due Soon section" do
+      it "lists only the signed-in user's tasks due in the next 7 days" do
+        create(:task, title: "Mine, due in 2 days", assignee: user, due_date: Date.new(2026, 10, 10))
+        create(:task, title: "Someone else's, due in 2 days", assignee: create(:user), due_date: Date.new(2026, 10, 10))
+        create(:task, title: "Mine, due in 8 days", assignee: user, due_date: Date.new(2026, 10, 16))
+
+        get tasks_path
+
+        expect(response).to have_http_status(:ok)
+        expect(row_titles(section_id: "due_soon")).to eq(["Mine, due in 2 days"])
+        expect(section(id: "due_soon").text).not_to include("Nothing due in the next 7 days.")
+      end
+
+      it "leaves every task in the All tasks list" do
+        titles = [
+          create(:task, title: "Mine, due in 2 days", assignee: user, due_date: Date.new(2026, 10, 10)),
+          create(:task, title: "Someone else's, due in 2 days", assignee: create(:user), due_date: Date.new(2026, 10, 10)),
+          create(:task, title: "Mine, due in 8 days", assignee: user, due_date: Date.new(2026, 10, 16)),
+          create(:task, title: "Unscheduled", due_date: nil)
+        ].map(&:title)
+
+        get tasks_path
+
+        expect(response).to have_http_status(:ok)
+        expect(row_titles(section_id: "all_tasks")).to match_array(titles)
+      end
+
+      it "shows an empty state when nothing is due in the next 7 days" do
+        create(:task, title: "Mine, due in 8 days", assignee: user, due_date: Date.new(2026, 10, 16))
+
+        get tasks_path
+
+        expect(response).to have_http_status(:ok)
+        expect(row_titles(section_id: "due_soon")).to be_empty
+        expect(section(id: "due_soon").text).to include("Nothing due in the next 7 days.")
+      end
+
+      it "is still rendered when create fails" do
+        create(:task, title: "Mine, due tomorrow", assignee: user, due_date: Date.new(2026, 10, 9))
+
+        post tasks_path, params: {task: {title: ""}}
+
+        expect(response).to have_http_status(:unprocessable_content)
+        expect(row_titles(section_id: "due_soon")).to eq(["Mine, due tomorrow"])
+      end
     end
   end
 end

@@ -45,9 +45,10 @@ class TasksController < ApplicationController
 
   def load_tasks
     @tasks = Task.includes(:assignee).order(:created_at)
+    @due_soon_tasks = Task.due_soon_for(user: current_user).includes(:assignee)
   end
 
   def task_params
-    params.require(:task).permit(:title, :description, :complete, :assignee_id)
+    params.require(:task).permit(:title, :description, :complete, :assignee_id, :due_date)
   end
 end

@@ -4,6 +4,24 @@
 
 <hr class="my-8" />
 
-<div class="flex flex-col gap-y-8">
-  <%= render @tasks %>
-</div>
+<section id="due_soon">
+  <h2 class="text-xl font-bold mb-4">Due Soon</h2>
+
+  <%- if @due_soon_tasks.any? %>
+    <div class="flex flex-col gap-y-8">
+      <%= render @due_soon_tasks %>
+    </div>
+  <%- else %>
+    <p>Nothing due in the next 7 days.</p>
+  <%- end %>
+</section>
+
+<hr class="my-8" />
+
+<section id="all_tasks">
+  <h2 class="text-xl font-bold mb-4">All tasks</h2>
+
+  <div class="flex flex-col gap-y-8">
+    <%= render @tasks %>
+  </div>
+</section>
