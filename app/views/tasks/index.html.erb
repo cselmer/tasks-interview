@@ -1,9 +1,9 @@
 <h1 class="text-2xl font-bold mb-4">Tasks</h1>
 
-<div class="flex flex-col gap-y-8">
-  <%= render @tasks %>
-</div>
+<%= render partial: "form", locals: { task: @task } %>
 
 <hr class="my-8" />
 
-<%= render partial: "form", locals: { task: @task } %>
+<div class="flex flex-col gap-y-8">
+  <%= render @tasks %>
+</div>

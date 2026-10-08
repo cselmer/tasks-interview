@@ -42,6 +42,19 @@ RSpec.describe "Tasks", type: :request do
       expect(response.body.index("Older task")).to be < response.body.index("Newer task")
     end
 
+    it "renders the new task form" do
+      sign_in(user: create(:user))
+
+      get tasks_path
+
+      expect(response).to have_http_status(:ok)
+      assert_select "form[action=?][method=post]", tasks_path do
+        assert_select "input[name=?]", "task[title]"
+        assert_select "textarea[name=?]", "task[description]"
+        assert_select "input[type=submit]"
+      end
+    end
+
     it "offers to mark an incomplete task complete" do
       task = create(:task, complete: false)
       sign_in(user: create(:user))
@@ -51,6 +64,7 @@ RSpec.describe "Tasks", type: :request do
       assert_select "form[action=?]", task_path(task) do
         assert_select "button", text: "Mark complete"
         assert_select "input[name=?][value=?]", "task[complete]", "true"
+        assert_select "input[name=?][value=?]", "_method", "patch"
       end
       assert_select "h2.line-through", count: 0
     end
@@ -64,6 +78,7 @@ RSpec.describe "Tasks", type: :request do
       assert_select "form[action=?]", task_path(task) do
         assert_select "button", text: "Mark incomplete"
         assert_select "input[name=?][value=?]", "task[complete]", "false"
+        assert_select "input[name=?][value=?]", "_method", "patch"
       end
       assert_select "h2.line-through", text: task.title
     end
