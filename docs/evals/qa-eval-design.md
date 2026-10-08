@@ -31,9 +31,11 @@ hand, so the diffs look like what `/qa` meets in practice.
 | F4 | Unverified by mutation | A view claim whose spec posts params only (the toggle examples before their `_method` assertions were added) | FAIL; 🟠 unverified; the surviving mutation named (`method:` deleted) |
 | F5 | No claims block | F1 with the commit body stripped | FAIL on the 🟠 "no claims block" alone; claims derived, labelled author-unstated, and all verified |
 | F6 | Weak assertions | The seeded-titles example that checks 2 of 20 titles; the "keeps the current assignee" example that passes against a no-op update | 🟠 unverified for each (`.limit(6)` and a no-op `update` survive) |
+| F7 | Missing companion | The area 4 skill commits as they landed, before the README entry for `/work` and `/qa` was added in a later commit | FAIL; one 🟠 "missing companion change" naming `README.md`; nothing else flagged |
 
 F1 and F2 exist today as `cselmer/tasks-title-not-null` and
-`cselmer/tasks-title-not-null-planted`. F3–F6 are one commit each away from
+`cselmer/tasks-title-not-null-planted`. F7 is a real miss, not a plant: the
+skills shipped without their README entry, and no check could see an absence. F3–F6 are one commit each away from
 F1 or from session 1's branches. Later fixtures add one per side-effect class
 the skill lists: a `Gemfile` bump, a widened `permit`, a dropped
 `before_action`, a removed route, a renamed seed title, an empty failure path,
