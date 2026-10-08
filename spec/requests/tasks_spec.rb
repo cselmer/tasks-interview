@@ -1,6 +1,16 @@
 require "rails_helper"
 
 RSpec.describe "Tasks", type: :request do
+  def users_queries_during(&block)
+    queries = []
+    subscriber = lambda do |*, payload|
+      queries << payload[:sql] if payload[:name] != "SCHEMA" && payload[:sql].include?('FROM "users"')
+    end
+
+    ActiveSupport::Notifications.subscribed(subscriber, "sql.active_record", &block)
+    queries.size
+  end
+
   describe "GET /tasks" do
     it "redirects to login when signed out" do
       get tasks_path
@@ -289,16 +299,6 @@ RSpec.describe "Tasks", type: :request do
       expect(queries_with_two_tasks).to be_positive
       expect(queries_with_six_tasks).to eq(queries_with_two_tasks)
     end
-
-    def users_queries_during(&block)
-      queries = []
-      subscriber = lambda do |*, payload|
-        queries << payload[:sql] if payload[:name] != "SCHEMA" && payload[:sql].include?('FROM "users"')
-      end
-
-      ActiveSupport::Notifications.subscribed(subscriber, "sql.active_record", &block)
-      queries.size
-    end
   end
 
   describe "assignee select" do
@@ -403,6 +403,21 @@ RSpec.describe "Tasks", type: :request do
 
       expect(response).to have_http_status(:ok)
       expect(section(id: "all_tasks").text).to include("No due date")
+    end
+
+    it "does not query users once per due-soon task" do
+      2.times { create(:task, assignee: user, due_date: Date.new(2026, 10, 9)) }
+
+      queries_with_two_tasks = users_queries_during { get tasks_path }
+      expect(response).to have_http_status(:ok)
+
+      4.times { create(:task, assignee: user, due_date: Date.new(2026, 10, 9)) }
+
+      queries_with_six_tasks = users_queries_during { get tasks_path }
+      expect(response).to have_http_status(:ok)
+
+      expect(queries_with_two_tasks).to be_positive
+      expect(queries_with_six_tasks).to eq(queries_with_two_tasks)
     end
 
     describe "Due Soon section" do

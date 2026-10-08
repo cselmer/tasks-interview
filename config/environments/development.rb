@@ -39,6 +39,9 @@ Rails.application.configure do
   # Don't care if the mailer can't send.
   config.action_mailer.raise_delivery_errors = false
 
+  # Write mail to tmp/mails instead of trying SMTP on localhost, so it can be read.
+  config.action_mailer.delivery_method = :file
+
   config.action_mailer.perform_caching = false
 
   # Print deprecation notices to the Rails logger.

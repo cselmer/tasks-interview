@@ -86,6 +86,17 @@ RSpec.describe Task, type: :model do
 
       expect(Task.due_soon_for(user:)).to eq([today, in_three_days, in_seven_days])
     end
+
+    context "when the app's date is ahead of the server's" do
+      around { |example| Time.use_zone("Pacific/Auckland") { example.run } }
+      before { travel_to Time.utc(2026, 10, 8, 23, 30) } # already October 9 in Auckland
+
+      it "counts a task due 7 days after the app's today" do
+        task = create(:task, assignee: user, due_date: Date.new(2026, 10, 16))
+
+        expect(Task.due_soon_for(user:)).to eq([task])
+      end
+    end
   end
 
   describe ".due_tomorrow" do
@@ -127,6 +138,17 @@ RSpec.describe Task, type: :model do
       create(:task, assignee: nil, due_date: Date.new(2026, 10, 9))
 
       expect(Task.due_tomorrow).to be_empty
+    end
+
+    context "when the app's date is ahead of the server's" do
+      around { |example| Time.use_zone("Pacific/Auckland") { example.run } }
+      before { travel_to Time.utc(2026, 10, 8, 23, 30) } # already October 9 in Auckland
+
+      it "counts a task due the day after the app's today" do
+        task = create(:task, assignee:, due_date: Date.new(2026, 10, 10))
+
+        expect(Task.due_tomorrow).to eq([task])
+      end
     end
   end
 end
