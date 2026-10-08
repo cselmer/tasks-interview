@@ -13,6 +13,9 @@
   <%= form.label :description %>
   <%= form.text_area :description %>
 
+  <%= form.label :assignee_id, "Assignee" %>
+  <%= form.collection_select :assignee_id, assignable_users, :id, :name, include_blank: "Unassigned" %>
+
   <div class="flex justify-start items-center gap-x-2">
     <%= form.submit "Save Task", class: "p-2 border rounded bg-gray-100 hover:bg-gray-200 cursor-pointer" %>
     <%- unless task.new_record? %>

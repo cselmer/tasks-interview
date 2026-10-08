@@ -15,4 +15,8 @@ RSpec.describe Task, type: :model do
   it "rejects a whitespace-only title" do
     expect(build(:task, title: "  ")).not_to be_valid
   end
+
+  it "has a database foreign key on assignee_id" do
+    expect { create(:task, assignee_id: 0) }.to raise_error(ActiveRecord::InvalidForeignKey)
+  end
 end
