@@ -1,0 +1,51 @@
+diff --git a/app/controllers/tasks_controller.rb b/app/controllers/tasks_controller.rb
+new file mode 100644
+index 0000000..f0de94c
+--- /dev/null
++++ b/app/controllers/tasks_controller.rb
+@@ -0,0 +1,45 @@
++class TasksController < ApplicationController
++  before_action :authenticate_user
++
++  def index
++    @tasks = Task.all
++  end
++
++  def edit
++    @task = Task.find(params[:id])
++  end
++
++  def create
++    @task = Task.new(task_params)
++
++    if @task.save
++      redirect_to tasks_path
++    else
++      @tasks = Task.all
++      render :index, status: :unprocessable_content
++    end
++  end
++
++  def update
++    @task = Task.find(params[:id])
++
++    if @task.update(task_params)
++      redirect_to tasks_path, status: :see_other
++    else
++      render :edit, status: :unprocessable_content
++    end
++  end
++
++  def destroy
++    @task = Task.find(params[:id])
++    @task.destroy!
++
++    redirect_to tasks_path, status: :see_other
++  end
++
++  private
++
++  def task_params
++    params.require(:task).permit(:title, :description, :complete)
++  end
++end
