@@ -2,7 +2,8 @@ class TasksController < ApplicationController
   before_action :authenticate_user
 
   def index
-    @tasks = Task.all
+    load_tasks
+    @task = Task.new
   end
 
   def edit
@@ -15,7 +16,8 @@ class TasksController < ApplicationController
     if @task.save
       redirect_to tasks_path
     else
-      # TODO: handle
+      load_tasks
+      render :index, status: :unprocessable_content
     end
   end
 
@@ -25,7 +27,7 @@ class TasksController < ApplicationController
     if @task.update(task_params)
       redirect_to tasks_path
     else
-      # TODO: handle
+      render :edit, status: :unprocessable_content
     end
   end
 
@@ -35,11 +37,15 @@ class TasksController < ApplicationController
     if @task.destroy
       redirect_to tasks_path
     else
-      # TODO: handle
+      redirect_to tasks_path, alert: "Could not delete task."
     end
   end
 
   private
+
+  def load_tasks
+    @tasks = Task.order(:created_at)
+  end
 
   def task_params
     params.require(:task).permit(:title, :description, :complete)
