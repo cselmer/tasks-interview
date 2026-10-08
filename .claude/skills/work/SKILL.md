@@ -108,14 +108,15 @@ it out and record it under "Not done" with the reason.
 
 Where practical, write each behavior's example first, run
 `bundle exec rspec <file>`, and see it fail for the right reason; then write
-the code and see it pass. Follow `CLAUDE.md` and the Traps below. Name each
-example for what it pins, and don't test Rails itself.
+the code and see it pass. Follow `CLAUDE.md` and the few traps below that it
+does not cover. Name each example for what it pins, and don't test Rails
+itself.
 
 - Schema change: `bin/rails generate migration <Name> ...`, then
-  `bin/rails db:migrate`, then `git diff db/schema.rb` (trap 9). A constraint
-  (`change_column_null`, a foreign key, a unique index) fails on rows that
-  already violate it: decide between a backfill in the migration and failing
-  loudly, and record the choice under "Assumptions".
+  `bin/rails db:migrate`, then `git diff db/schema.rb` (`CLAUDE.md`,
+  **Setup**). A constraint (`change_column_null`, a foreign key, a unique
+  index) fails on rows that already violate it: decide between a backfill in
+  the migration and failing loudly, and record the choice under "Assumptions".
 - New utility classes, no `bin/dev` running: `bin/rails tailwindcss:build`.
 
 ## Step 6: Mutate what the user needs
@@ -139,8 +140,8 @@ line in `db/schema.rb`: the test database reloads a changed schema on the next
 database is back on the real schema.
 
 A claim whose mutation leaves the suite green is not verified: strengthen the
-spec (usually by asserting what the view emits, trap 2) and mutate again, or
-drop the claim. Delete any probe spec you wrote.
+spec (usually by asserting what the view emits; `CLAUDE.md`, **Testing**) and
+mutate again, or drop the claim. Delete any probe spec you wrote.
 
 ## Step 7: Gate
 
@@ -219,33 +220,20 @@ End your last message with, in order:
 - `spec/models/task_spec.rb` (scopes, zone boundaries), `spec/factories/`,
   `spec/support/{authentication_helpers,time_helpers}.rb`.
 
-## Traps
+## Traps `CLAUDE.md` does not cover
 
-1. Request specs: `have_http_status` before `response.body`, `assert_select`,
-   or `parsed_body`, and again after `follow_redirect!`.
-2. Specs that only post params never pin the view: assert the form's fields,
-   a `button_to`'s `_method`, the row a value is in.
-3. `assert_select` and `response.parsed_body` work in request specs; Capybara
-   matchers do not.
-4. Request specs see rendered error pages, not raised exceptions; pin a raise
-   in a model spec.
-5. `status: :unprocessable_content`, never `:unprocessable_entity`.
-6. `includes` on every collection the index renders, including the failure
-   path's re-render (`load_tasks`).
-7. `Date.current` / `Date.tomorrow` / `Time.zone`, never `Date.today` /
-   `Time.now`; the zone is UTC.
-8. `tasks.complete` is nullable; the form stores `NULL`; `Task.incomplete`
-   treats `NULL` as incomplete.
-9. After a migration, `git diff db/schema.rb` is the version bump plus this
-   branch's change only; factories stay valid without defaults for new
-   nullable columns.
-10. Seeds are idempotent and `bin/ci` replants them; a new validation must not
-    break `db/seeds.rb`.
-11. `sign_in(user:)` posts a real login, so use a factory user. `travel_to`
-    freezes `created_at`, so ordering specs set timestamps explicitly.
-12. Rebuild Tailwind after new utility classes when `bin/dev` is not running.
-13. Clean up probe specs; leave `ActionMailer::Base.deliveries` cleared; track
-    nothing under `tmp/`, `log/`, or `app/assets/builds/`.
+Everything else this skill relies on is in `CLAUDE.md`: **Setup** (per-checkout
+setup, the gate, seeds, the schema diff, Tailwind), **Rails conventions**
+(failure renders, eager loading, dates, the nullable `complete` column),
+**Testing** (status-first, pinning what the view emits, `spec/support`
+helpers), and **Git & PRs** (the base branch). Read it rather than this list.
+
+1. A new nullable column gets no factory default; the factories stay valid as
+   they are.
+2. Delete probe specs before committing; a spec that reads
+   `ActionMailer::Base.deliveries` clears it in `before`.
+3. Stage by explicit path: nothing under `tmp/`, `log/`, or
+   `app/assets/builds/` is ever tracked.
 
 ## Definition of done
 
